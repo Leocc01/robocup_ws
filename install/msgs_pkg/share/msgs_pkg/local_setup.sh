@@ -1,0 +1,1 @@
+/home/user/robocup_ws/build/msgs_pkg/ament_cmake_environment_hooks/local_setup.sh

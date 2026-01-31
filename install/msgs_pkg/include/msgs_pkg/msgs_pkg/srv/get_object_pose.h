@@ -1,0 +1,1 @@
+/home/user/robocup_ws/build/msgs_pkg/rosidl_generator_c/msgs_pkg/srv/get_object_pose.h

@@ -1,0 +1,1 @@
+/home/user/robocup_ws/build/msgs_pkg/rosidl_generator_cpp/msgs_pkg/msg/detail/object_pose__struct.hpp

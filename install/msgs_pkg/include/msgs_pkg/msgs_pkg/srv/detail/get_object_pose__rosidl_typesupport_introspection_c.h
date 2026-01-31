@@ -1,0 +1,1 @@
+/home/user/robocup_ws/build/msgs_pkg/rosidl_typesupport_introspection_c/msgs_pkg/srv/detail/get_object_pose__rosidl_typesupport_introspection_c.h

@@ -1,0 +1,25 @@
+[3.213s] Invoking command in '/home/user/robocup_ws/build/serial_pkg': PYTHONPATH=/home/user/robocup_ws/build/serial_pkg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/user/robocup_ws/install/serial_pkg/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/user/robocup_ws/build/serial_pkg/build --no-deps symlink_data
+[4.821s] running develop
+[6.306s] running egg_info
+[6.307s] creating serial_pkg.egg-info
+[6.307s] writing serial_pkg.egg-info/PKG-INFO
+[6.319s] writing dependency_links to serial_pkg.egg-info/dependency_links.txt
+[6.319s] writing entry points to serial_pkg.egg-info/entry_points.txt
+[6.319s] writing requirements to serial_pkg.egg-info/requires.txt
+[6.320s] writing top-level names to serial_pkg.egg-info/top_level.txt
+[6.321s] writing manifest file 'serial_pkg.egg-info/SOURCES.txt'
+[6.336s] reading manifest file 'serial_pkg.egg-info/SOURCES.txt'
+[6.336s] writing manifest file 'serial_pkg.egg-info/SOURCES.txt'
+[6.346s] running build_ext
+[6.349s] Creating /home/user/robocup_ws/install/serial_pkg/lib/python3.10/site-packages/serial-pkg.egg-link (link to .)
+[6.354s] Installing serial_flag_bridge script to /home/user/robocup_ws/install/serial_pkg/lib/serial_pkg
+[6.358s] Installing workcell_coordinator script to /home/user/robocup_ws/install/serial_pkg/lib/serial_pkg
+[6.358s] 
+[6.358s] Installed /home/user/robocup_ws/build/serial_pkg
+[6.361s] running symlink_data
+[6.366s] creating /home/user/robocup_ws/install/serial_pkg/share/ament_index
+[6.366s] creating /home/user/robocup_ws/install/serial_pkg/share/ament_index/resource_index
+[6.366s] creating /home/user/robocup_ws/install/serial_pkg/share/ament_index/resource_index/packages
+[6.366s] symbolically linking /home/user/robocup_ws/build/serial_pkg/resource/serial_pkg -> /home/user/robocup_ws/install/serial_pkg/share/ament_index/resource_index/packages
+[6.366s] symbolically linking /home/user/robocup_ws/build/serial_pkg/package.xml -> /home/user/robocup_ws/install/serial_pkg/share/serial_pkg
+[6.530s] Invoked command in '/home/user/robocup_ws/build/serial_pkg' returned '0': PYTHONPATH=/home/user/robocup_ws/build/serial_pkg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/user/robocup_ws/install/serial_pkg/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/user/robocup_ws/build/serial_pkg/build --no-deps symlink_data

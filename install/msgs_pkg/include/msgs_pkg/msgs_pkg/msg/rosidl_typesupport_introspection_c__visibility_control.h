@@ -1,0 +1,1 @@
+/home/user/robocup_ws/build/msgs_pkg/rosidl_typesupport_introspection_c/msgs_pkg/msg/rosidl_typesupport_introspection_c__visibility_control.h

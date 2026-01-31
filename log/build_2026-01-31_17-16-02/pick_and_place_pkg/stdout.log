@@ -1,0 +1,28 @@
+running develop
+running egg_info
+creating pick_and_place_pkg.egg-info
+writing pick_and_place_pkg.egg-info/PKG-INFO
+writing dependency_links to pick_and_place_pkg.egg-info/dependency_links.txt
+writing entry points to pick_and_place_pkg.egg-info/entry_points.txt
+writing requirements to pick_and_place_pkg.egg-info/requires.txt
+writing top-level names to pick_and_place_pkg.egg-info/top_level.txt
+writing manifest file 'pick_and_place_pkg.egg-info/SOURCES.txt'
+reading manifest file 'pick_and_place_pkg.egg-info/SOURCES.txt'
+writing manifest file 'pick_and_place_pkg.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/user/robocup_ws/install/pick_and_place_pkg/lib/python3.10/site-packages/pick-and-place-pkg.egg-link (link to .)
+Installing aruco_pose_service_node script to /home/user/robocup_ws/install/pick_and_place_pkg/lib/pick_and_place_pkg
+Installing gripper_node script to /home/user/robocup_ws/install/pick_and_place_pkg/lib/pick_and_place_pkg
+Installing load_node script to /home/user/robocup_ws/install/pick_and_place_pkg/lib/pick_and_place_pkg
+Installing multi_aruco_pose_service_node script to /home/user/robocup_ws/install/pick_and_place_pkg/lib/pick_and_place_pkg
+Installing multi_load_node script to /home/user/robocup_ws/install/pick_and_place_pkg/lib/pick_and_place_pkg
+Installing multi_unload_node script to /home/user/robocup_ws/install/pick_and_place_pkg/lib/pick_and_place_pkg
+Installing unload_node script to /home/user/robocup_ws/install/pick_and_place_pkg/lib/pick_and_place_pkg
+
+Installed /home/user/robocup_ws/build/pick_and_place_pkg
+running symlink_data
+creating /home/user/robocup_ws/install/pick_and_place_pkg/share/ament_index
+creating /home/user/robocup_ws/install/pick_and_place_pkg/share/ament_index/resource_index
+creating /home/user/robocup_ws/install/pick_and_place_pkg/share/ament_index/resource_index/packages
+symbolically linking /home/user/robocup_ws/build/pick_and_place_pkg/resource/pick_and_place_pkg -> /home/user/robocup_ws/install/pick_and_place_pkg/share/ament_index/resource_index/packages
+symbolically linking /home/user/robocup_ws/build/pick_and_place_pkg/package.xml -> /home/user/robocup_ws/install/pick_and_place_pkg/share/pick_and_place_pkg

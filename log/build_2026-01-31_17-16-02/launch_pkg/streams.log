@@ -1,0 +1,25 @@
+[2.592s] Invoking command in '/home/user/robocup_ws/build/launch_pkg': PYTHONPATH=/home/user/robocup_ws/build/launch_pkg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/user/robocup_ws/install/launch_pkg/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/user/robocup_ws/build/launch_pkg/build --no-deps symlink_data
+[3.494s] running develop
+[4.191s] running egg_info
+[4.191s] creating launch_pkg.egg-info
+[4.192s] writing launch_pkg.egg-info/PKG-INFO
+[4.194s] writing dependency_links to launch_pkg.egg-info/dependency_links.txt
+[4.194s] writing entry points to launch_pkg.egg-info/entry_points.txt
+[4.194s] writing requirements to launch_pkg.egg-info/requires.txt
+[4.195s] writing top-level names to launch_pkg.egg-info/top_level.txt
+[4.195s] writing manifest file 'launch_pkg.egg-info/SOURCES.txt'
+[4.198s] reading manifest file 'launch_pkg.egg-info/SOURCES.txt'
+[4.201s] writing manifest file 'launch_pkg.egg-info/SOURCES.txt'
+[4.203s] running build_ext
+[4.204s] Creating /home/user/robocup_ws/install/launch_pkg/lib/python3.10/site-packages/launch-pkg.egg-link (link to .)
+[4.208s] 
+[4.208s] Installed /home/user/robocup_ws/build/launch_pkg
+[4.208s] running symlink_data
+[4.211s] creating /home/user/robocup_ws/install/launch_pkg/share/ament_index
+[4.211s] creating /home/user/robocup_ws/install/launch_pkg/share/ament_index/resource_index
+[4.211s] creating /home/user/robocup_ws/install/launch_pkg/share/ament_index/resource_index/packages
+[4.211s] symbolically linking /home/user/robocup_ws/build/launch_pkg/resource/launch_pkg -> /home/user/robocup_ws/install/launch_pkg/share/ament_index/resource_index/packages
+[4.211s] symbolically linking /home/user/robocup_ws/build/launch_pkg/package.xml -> /home/user/robocup_ws/install/launch_pkg/share/launch_pkg
+[4.213s] creating /home/user/robocup_ws/install/launch_pkg/share/launch_pkg/launch
+[4.213s] symbolically linking /home/user/robocup_ws/build/launch_pkg/launch/demo.launch.py -> /home/user/robocup_ws/install/launch_pkg/share/launch_pkg/launch
+[5.244s] Invoked command in '/home/user/robocup_ws/build/launch_pkg' returned '0': PYTHONPATH=/home/user/robocup_ws/build/launch_pkg/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/user/robocup_ws/install/launch_pkg/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/user/robocup_ws/build/launch_pkg/build --no-deps symlink_data
