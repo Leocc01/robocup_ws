@@ -1,1 +1,0 @@
-/home/user/robocup_ws/build/msgs_pkg/rosidl_cmake/srv/RunWS_Request.msg

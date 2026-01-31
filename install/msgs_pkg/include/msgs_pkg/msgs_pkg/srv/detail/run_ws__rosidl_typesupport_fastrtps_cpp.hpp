@@ -1,1 +1,0 @@
-/home/user/robocup_ws/build/msgs_pkg/rosidl_typesupport_fastrtps_cpp/msgs_pkg/srv/detail/run_ws__rosidl_typesupport_fastrtps_cpp.hpp

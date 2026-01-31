@@ -1,1 +1,0 @@
-/home/user/robocup_ws/build/msgs_pkg/ament_cmake_core/msgs_pkgConfig-version.cmake

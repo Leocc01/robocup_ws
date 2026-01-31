@@ -1,1 +1,0 @@
-/home/user/robocup_ws/build/msgs_pkg/rosidl_typesupport_fastrtps_c/msgs_pkg/msg/rosidl_typesupport_fastrtps_c__visibility_control.h
