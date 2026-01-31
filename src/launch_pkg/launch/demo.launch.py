@@ -14,7 +14,7 @@ def generate_launch_description():
 
     # 1) 카메라 (너가 쓰는 명령 그대로)
     realsense_launch = ExecuteProcess(
-        cmd=["ros2", "launch", "realsense_camera", "rs_launch.py"],
+        cmd=["ros2", "launch", "realsense2_camera", "rs_launch.py"],
         output="screen",
     )
 
