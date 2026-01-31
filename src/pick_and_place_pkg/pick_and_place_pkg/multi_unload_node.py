@@ -342,7 +342,7 @@ import rbpodo as rb
 from std_srvs.srv import Trigger
 from msgs_pkg.srv import RunWS
 
-# 설정값
+# 설정값 (유지)
 ROBOT_IP = "10.0.2.7"
 COUNT_FILE = "/tmp/loaded_count.txt"
 
@@ -370,7 +370,7 @@ L_VEL, L_ACC = 500, 800
 class UnloadNode(Node):
     def __init__(self):
         super().__init__("unload_node")
-        self.get_logger().info("✅ Unload Node: Total Unload Mode Ready")
+        self.get_logger().info("✅ Unload Node: Grip Failure Termination Mode Ready")
 
         self.callback_group = ReentrantCallbackGroup()
         
@@ -379,7 +379,6 @@ class UnloadNode(Node):
             self.rc = rb.ResponseCollector()
             self.robot.set_operation_mode(self.rc, rb.OperationMode.Real)
             self.robot.set_speed_bar(self.rc, 1.0)
-
             self.get_logger().info("🤖 Robot Connected")
         except Exception as e:
             self.get_logger().error(f"❌ Connection Error: {e}")
@@ -392,7 +391,6 @@ class UnloadNode(Node):
         self._busy = False
 
     def cb_unload3(self, req, res):
-        # 🎯 파일에서 누적된 전체 개수 읽기
         count = 0
         if os.path.exists(COUNT_FILE):
             try:
@@ -408,11 +406,14 @@ class UnloadNode(Node):
 
         try:
             if count > 0:
-                self.sequence_unload(count)
-                # 🎯 하차 완료 후 트레이가 비었으므로 0으로 초기화
+                # 실제로 하차에 성공한 개수를 추적하기 위해 sequence_unload의 반환값 사용
+                success_count = self.sequence_unload(count)
+                
+                # [중요] 남은 개수 업데이트 (전체 하차 성공 시 0, 도중 실패 시 남은 개수 기록)
+                remaining = count - success_count
                 with open(COUNT_FILE, "w") as f:
-                    f.write("0")
-                self.get_logger().info("♻️ Tray emptied. Count reset to 0.")
+                    f.write(str(remaining))
+                self.get_logger().info(f"♻️ Unload Process Finished. Remaining in tray: {remaining}")
             else:
                 self.get_logger().warn("ℹ️ Nothing to unload.")
 
@@ -425,20 +426,42 @@ class UnloadNode(Node):
     def sequence_unload(self, count):
         self.get_logger().info(f"▶ START UNLOAD: {count} items")
         self.call_gripper(self.open_client, "OPEN")
-        self.go_home()
+        self.go_home_forced(timeout=1.0)
 
+        unloaded_so_far = 0
         for i in range(count):
             self.get_logger().info(f"📦 Unloading item #{i+1} from Slot #{i+1}")
-            self.run_once(CARGO_LIST[i], DROP_OFFSETS[i])
+            
+            result = self.run_once(CARGO_LIST[i], DROP_OFFSETS[i])
+            
+            if result == "SUCCESS":
+                unloaded_so_far += 1
+            elif result == "GRIP_FAILED":
+                self.get_logger().error(f"🛑 Grip failed at Slot #{i+1}. Stopping unload sequence.")
+                break # 실패 시 즉시 루프 탈출
+                
+        return unloaded_so_far
 
     def run_once(self, cargo_target, drop_offset):
+        # 1. 트레이 슬롯으로 이동
         self.go_pose_j(cargo_target, "PICK_FROM_CARGO")
+        
         self.robot.move_l_rel(self.rc, np.array([0.0,0.0,CARGO_DOWN_MM,0.0,0.0,0.0]), L_VEL, L_ACC, rb.ReferenceFrame.Tool)
         self.wait_move("DESCEND")
-        self.call_gripper(self.grip_client, "GRIP")
+        
+        # [핵심] 그리퍼 잡기 시도 및 결과 확인
+        if not self.call_gripper(self.grip_client, "GRIP"):
+            self.get_logger().warn("Grip failed! Emergency return to home.")
+            # 안전을 위해 위로 회피 후 홈으로 이동
+            self.robot.move_l_rel(self.rc, np.array([0.0, 0.0, -100.0, 0.0, 0.0, 0.0]), L_VEL, L_ACC, rb.ReferenceFrame.Tool)
+            self.wait_move("EMERGENCY_UP")
+            self.go_home()
+            return "GRIP_FAILED"
+        
         self.robot.move_l_rel(self.rc, np.array([0.0,0.0,CARGO_UP_MM,0.0,0.0,0.0]), L_VEL, L_ACC, rb.ReferenceFrame.Tool)
         self.wait_move("ASCEND")
 
+        # 2. 하차 지점으로 이동
         self.go_pose_j(POSE_DROP, "DROP_BASE")
         if np.any(drop_offset != 0):
             self.robot.move_l_rel(self.rc, drop_offset, L_VEL, L_ACC, rb.ReferenceFrame.Base)
@@ -446,14 +469,30 @@ class UnloadNode(Node):
 
         self.robot.move_l_rel(self.rc, np.array([0.0,0.0,DROP_DOWN_MM,0.0,0.0,0.0]), L_VEL, L_ACC, rb.ReferenceFrame.Tool)
         self.wait_move("DROP_DESCEND")
+        
         self.call_gripper(self.open_client, "RELEASE")
+        
         self.robot.move_l_rel(self.rc, np.array([0.0,0.0,DROP_UP_MM,0.0,0.0,0.0]), L_VEL, L_ACC, rb.ReferenceFrame.Tool)
         self.wait_move("DROP_ASCEND")
+
         self.go_home()
+        return "SUCCESS"
+
+    # --- 제어 함수 (기존과 동일) ---
+
+    def go_home_forced(self, timeout=3.0):
+        self.get_logger().info(f"🏠 [Forced] Moving to HOME... ({timeout}s)")
+        self.robot.move_j(self.rc, HOME_JOINT_DEG, J_VEL, J_ACC)
+        time.sleep(timeout)
+        return True
 
     def go_home(self):
         self.robot.move_j(self.rc, HOME_JOINT_DEG, J_VEL, J_ACC)
         return self.wait_move("HOME")
+
+    def wait_move(self, name):
+        self.robot.wait_for_move_finished(self.rc)
+        return True
 
     def go_final_pose(self):
         self.robot.move_j(self.rc, POSE_FINAL, J_VEL, J_ACC)
@@ -463,15 +502,14 @@ class UnloadNode(Node):
         self.robot.move_j(self.rc, joints, J_VEL, J_ACC)
         return self.wait_move(name)
 
-    def wait_move(self, name):
-        self.robot.wait_for_move_finished(self.rc)
-        return True
-
     def call_gripper(self, client, name):
         future = client.call_async(Trigger.Request())
         start = time.time()
-        while rclpy.ok() and (time.time() - start < 4.0):
-            if future.done(): return True
+        while rclpy.ok() and (time.time() - start < 6.0): # 그리퍼 노드 타임아웃 고려하여 6초
+            if future.done():
+                res = future.result()
+                if res and res.success: return True
+                else: return False
             time.sleep(0.1)
         return False
 
@@ -480,7 +518,12 @@ def main():
     node = UnloadNode()
     executor = MultiThreadedExecutor()
     executor.add_node(node)
-    executor.spin()
-    rclpy.shutdown()
+    try:
+        executor.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == "__main__": main()

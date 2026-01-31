@@ -436,14 +436,11 @@ import rbpodo as rb
 from std_srvs.srv import Trigger
 from msgs_pkg.srv import GetObjectPose, RunWS
 
-# 설정값
+# 설정값 (기존 설정 유지)
 ROBOT_IP = "10.0.2.7"
 COUNT_FILE = "/tmp/loaded_count.txt"
-
 HOME_JOINT_DEG = np.array([-90.0, 0.0, 90.0, 0.0, 90.0, 0.0])
 POSE_FINAL = np.array([-90.0, -35.0, 125.0, 0.0, 90.0, 0.0])
-
-# 트레이 슬롯 (1, 2, 3번)
 CARGO_POSES = [
     np.array([-65.31, -16.33, -31.69, -0.01, -131.95, 24.62]), # Slot 1
     np.array([-93.25, -7.91, -42.05, 0.0, -130.0, -3.32]),    # Slot 2
@@ -462,7 +459,7 @@ L_VEL, L_ACC = 500, 800
 class LoadNode(Node):
     def __init__(self):
         super().__init__("load_node")
-        self.get_logger().info("✅ Load Node: Cumulative Mode Ready")
+        self.get_logger().info("✅ Load Node: Grip Failure Termination Mode Ready")
 
         self.callback_group = ReentrantCallbackGroup()
         
@@ -503,47 +500,54 @@ class LoadNode(Node):
             with self._busy_lock: self._busy = False
 
     def sequence_load(self):
-        # 1. 현재 트레이에 있는 개수 파악
         current_count = self.get_current_count()
-        self.get_logger().info(f"▶ START LOAD. Current Tray: {current_count}/3")
+        self.get_logger().info(f"▶ START. Current Tray: {current_count}/3")
 
         if current_count >= 3:
-            self.get_logger().warn("⚠️ Tray is already FULL. Moving to Final.")
+            self.get_logger().warn("⚠️ Tray FULL.")
             self.go_final_pose()
             return current_count
 
         self.call_gripper(self.open_client, "OPEN")
-        self.go_home()
+        self.go_home_forced(timeout=1.0) 
 
-        # 2. 비어있는 슬롯 인덱스부터 시작
-        # 예: current_count가 1이면 index 1(2번 슬롯)부터 시작
         newly_loaded = 0
         for i in range(current_count, len(CARGO_POSES)):
-            self.get_logger().info(f"🚀 Slot #{i+1} Attempting (Empty Slot)")
+            self.get_logger().info(f"🚀 Slot #{i+1} Attempting")
             
-            if self.run_once(CARGO_POSES[i]):
+            # run_once의 결과에 따라 시나리오 분기
+            result = self.run_once(CARGO_POSES[i])
+            
+            if result == "SUCCESS":
                 newly_loaded += 1
-            else:
-                self.get_logger().info("ℹ️ No more items detected on floor.")
+            elif result == "GRIP_FAILED":
+                self.get_logger().error("🛑 Grip Failed! Terminating whole sequence.")
+                break # 그리퍼 실패 즉시 반복문 탈출 (더 이상 시도 안 함)
+            else: # 비전 인식 실패(pose is None) 등
+                self.get_logger().info("ℹ️ No more items detected. Stopping.")
                 break 
 
-        # 3. 누적 개수 업데이트 및 저장
         updated_total = current_count + newly_loaded
         with open(COUNT_FILE, "w") as f:
             f.write(str(updated_total))
         
-        self.get_logger().info(f"💾 Updated Total Count: {updated_total}/3")
+        self.get_logger().info(f"💾 Updated Total: {updated_total}/3")
+        
+        # 루프를 빠져나오면(정상 완료든 실패 중단이든) 무조건 파이널 포즈로 이동
         self.go_final_pose()
         return updated_total
 
     def run_once(self, cargo_target):
         pose = self.call_pose(5.0)
-        if pose is None: return False
+        if pose is None: return "NO_ITEM"
 
+        # 비전 정렬
         target_j = HOME_JOINT_DEG.copy()
         target_j[5] += float(pose.rz)
-        self.go_pose_j(target_j, "ALIGN_YAW")
+        self.robot.move_j(self.rc, target_j, J_VEL, J_ACC)
+        time.sleep(2.0) 
 
+        # 물체 위치로 이동
         dx = -(pose.x * 1000.0) + CAM_TO_TCP_OFFSET_Y_MM
         dy =  (pose.y * 1000.0) + CAM_TO_TCP_OFFSET_X_MM
         self.robot.move_l_rel(self.rc, np.array([dy, dx, 0.0, 0.0, 0.0, 0.0]), L_VEL, L_ACC, rb.ReferenceFrame.Tool)
@@ -552,9 +556,18 @@ class LoadNode(Node):
         self.robot.move_l_rel(self.rc, np.array([0.0, 0.0, Z_APPROACH_MM, 0.0, 0.0, 0.0]), L_VEL, L_ACC, rb.ReferenceFrame.Tool)
         self.wait_move("APPROACH")
 
-        if not self.call_gripper(self.grip_client, "GRIP"): return False
+        # [핵심] 그리퍼 잡기 시도
+        if not self.call_gripper(self.grip_client, "GRIP"):
+            # 그리퍼가 실패 신호를 보내면 "GRIP_FAILED" 반환
+            # 충돌 방지를 위해 살짝 위로 이동 후 홈 복귀
+            self.get_logger().warn("Grip failed! Returning to safe pose.")
+            self.robot.move_l_rel(self.rc, np.array([0.0, 0.0, -100.0, 0.0, 0.0, 0.0]), L_VEL, L_ACC, rb.ReferenceFrame.Tool)
+            self.wait_move("EMERGENCY_UP")
+            self.go_home()
+            return "GRIP_FAILED"
         
-        self.go_home()
+        # 성공 시 시퀀스 계속 진행
+        self.go_home() 
         self.go_pose_j(cargo_target, "DROP_SLOT")
         
         self.robot.move_l_rel(self.rc, np.array([0.0, 0.0, Z_DOWN_MM, 0.0, 0.0, 0.0]), L_VEL, L_ACC, rb.ReferenceFrame.Tool)
@@ -564,11 +577,23 @@ class LoadNode(Node):
         self.wait_move("ASCEND")
         
         self.go_home()
+        return "SUCCESS"
+
+    # --- 제어 함수들 ---
+
+    def go_home_forced(self, timeout=3.0):
+        self.get_logger().info(f"🏠 [Forced] Moving to HOME... ({timeout}s)")
+        self.robot.move_j(self.rc, HOME_JOINT_DEG, J_VEL, J_ACC)
+        time.sleep(timeout)
         return True
 
     def go_home(self):
         self.robot.move_j(self.rc, HOME_JOINT_DEG, J_VEL, J_ACC)
         return self.wait_move("HOME")
+
+    def wait_move(self, name):
+        self.robot.wait_for_move_finished(self.rc)
+        return True
 
     def go_final_pose(self):
         self.robot.move_j(self.rc, POSE_FINAL, J_VEL, J_ACC)
@@ -577,10 +602,6 @@ class LoadNode(Node):
     def go_pose_j(self, joints, name):
         self.robot.move_j(self.rc, joints, J_VEL, J_ACC)
         return self.wait_move(name)
-
-    def wait_move(self, name):
-        self.robot.wait_for_move_finished(self.rc)
-        return True
 
     def call_pose(self, timeout):
         req = GetObjectPose.Request()
@@ -597,8 +618,13 @@ class LoadNode(Node):
     def call_gripper(self, client, name):
         future = client.call_async(Trigger.Request())
         start = time.time()
-        while rclpy.ok() and (time.time() - start < 4.0):
-            if future.done(): return True
+        # 그리퍼 노드가 5초 타임아웃을 가지므로 여기서는 여유 있게 6초 대기
+        while rclpy.ok() and (time.time() - start < 6.0):
+            if future.done():
+                res = future.result()
+                # 서비스 응답 객체의 success 필드 확인 (GripperNode가 False 반환 시 실패)
+                if res and res.success: return True
+                else: return False
             time.sleep(0.1)
         return False
 
@@ -607,7 +633,12 @@ def main():
     node = LoadNode()
     executor = MultiThreadedExecutor()
     executor.add_node(node)
-    executor.spin()
-    rclpy.shutdown()
+    try:
+        executor.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == "__main__": main()
